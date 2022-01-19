@@ -192,15 +192,15 @@ void spi1_init(void)
 {
 	gpio_mode_setup(PORT(SPI1_SCK), GPIO_MODE_AF, GPIO_PUPD_NONE, PIN(SPI1_SCK)); // SCK
 	gpio_set_output_options(PORT(SPI1_SCK), GPIO_OTYPE_PP, SPI_GPIO_SPEED, PIN(SPI1_SCK));
-	gpio_set_af(PORT(SPI1_SCK ), HC595_AF, PIN(SPI1_SCK ) );
+	gpio_set_af(PORT(SPI1_SCK ), SPI1_AF, PIN(SPI1_SCK ) );
 
 	gpio_mode_setup(PORT(SPI1_MISO), GPIO_MODE_AF, GPIO_PUPD_NONE, PIN(SPI1_MISO));	// MISO
-	gpio_set_af(PORT(SPI1_MISO), GPIO_AF5, PIN(SPI1_MISO));
+	gpio_set_af(PORT(SPI1_MISO), SPI1_AF, PIN(SPI1_MISO));
 	gpio_set_output_options(PORT(SPI1_MISO), GPIO_OTYPE_PP, SPI_GPIO_SPEED, PIN(SPI1_MISO));
 
 	gpio_mode_setup(PORT(SPI1_MOSI), GPIO_MODE_AF, GPIO_PUPD_NONE, PIN(SPI1_MOSI));	// MOSI
 	gpio_set_output_options(PORT(SPI1_MOSI), GPIO_OTYPE_PP, SPI_GPIO_SPEED, PIN(SPI1_MOSI));
-	gpio_set_af(PORT(SPI1_MOSI ), HC595_AF, PIN(SPI1_MOSI ) );
+	gpio_set_af(PORT(SPI1_MOSI ), SPI1_AF, PIN(SPI1_MOSI ) );
 
 	rcc_periph_clock_enable(RCC_SPI1);
 	spi_set_master_mode(SPI1);

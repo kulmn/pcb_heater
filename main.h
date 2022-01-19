@@ -52,10 +52,12 @@ typedef enum
 #define		PARAM2_SHOW_TIME		( 2 * (1000/DATA_OUT_TASK_FRQ) +  PARAM1_SHOW_TIME)		//s
 
 /**** PINs defines *******/
+#define SPI1_AF				GPIO_AF0
 
 #define SPI1_SCK			GPIOA, GPIO5
 #define SPI1_MISO			GPIOA, GPIO6
 #define SPI1_MOSI			GPIOA, GPIO7
+
 #define HC595_CS			GPIOA, GPIO3
 #ifdef STM32F0
 	#define		SPI_GPIO_SPEED		GPIO_OSPEED_HIGH

@@ -10,8 +10,8 @@
 
 #include <stdint.h>
 #include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/spi.h>
 #include "led7seg.h"
-#include "hc595.h"
 #include "convert_fn.h"
 
 
