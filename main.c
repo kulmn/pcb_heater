@@ -1,6 +1,6 @@
 #include "main.h"
 
-
+SemaphoreHandle_t xSPI_Mutex;
 SemaphoreHandle_t xButtons_Smphr[4];
 const GPIO_HW_PIN button_pins[4] = { {BUTTN_HOURS_UP}, {BUTTN_HOURS_DN} };
 
@@ -181,7 +181,9 @@ void vLed7segUpdateTask(void *pvParameters) 			//  ~ 21 * 4  bytes of stack used
 	for( ;; )
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
+		xSemaphoreTake(xSPI_Mutex, portMAX_DELAY);
 		led7seg_update(&led_ind);
+		xSemaphoreGive(xSPI_Mutex);
 	}
 	vTaskDelete(NULL);
 }
@@ -357,6 +359,7 @@ void vApplicationTickHook( void )
 int main(void)
 {
 	periphery_init();
+	xSPI_Mutex = xSemaphoreCreateMutex();
 //	xTemperQueue=xQueueCreate( 5, sizeof( DS18B20_TypeDef ));
 	xTaskCreate(vGetTempTask,(signed char*)"", configMINIMAL_STACK_SIZE * 2 ,NULL, tskIDLE_PRIORITY + 1, NULL);
 	xTaskCreate(vGetButtonStateTask,(signed char*)"", configMINIMAL_STACK_SIZE * 2,	NULL, tskIDLE_PRIORITY + 1, NULL);
