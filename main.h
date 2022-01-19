@@ -27,6 +27,8 @@
 
 #include "convert_fn.h"
 #include "timer_hal.h"
+#include "pwm.h"
+#include "pid.h"
 
 #include "indicators/led7seg.h"
 #include "indicators/led7seg_driver_sr.h"

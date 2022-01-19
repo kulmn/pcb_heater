@@ -9,10 +9,70 @@ LED7SEG			led_ind;
 LED7SEG_SR_Driver	led_driver;
 static uint8_t 		led7seg_buf[4];
 
+//! Parameters for regulator
+struct PID_DATA pidData;
+
+volatile uint16_t  temp_set_val, fan_set_val, temp_cur_val = 0;
+uint8_t	shutdn_flag=0, poweroff_flag=0;
 
 uint16_t 			mb_time_in_munutes = 0, loc_time_in_munutes = 0;
 uint16_t 			cur_temp=0;
 
+
+
+/******************************************************************************
+uint16_t max6675_get_temp(void)
+{
+	uint16_t spi_data;
+
+	gpio_clear(SPI1_CS);
+	spi_enable(SPI1);
+	spi_data=spi_read(SPI1);
+	gpio_set(SPI1_CS);
+	spi_disable(SPI1);
+	if (spi_data & 0x0004)	return 0;
+	else return  	spi_data= spi_data>>5;
+}
+
+/******************************************************************************
+void vPID_Task(void *pvParameters)	//  ~ 20 * 4  bytes of stack used
+{
+	TickType_t xLastWakeTime;
+	const TickType_t xFrequency = (300 / portTICK_RATE_MS);	// 200 ms
+	int16_t pwm_value = 0;
+
+	uint16_t tempData[16] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	uint8_t ta = 0;
+	uint32_t temp;
+
+	xLastWakeTime = xTaskGetTickCount();
+	for (;;)
+	{
+		vTaskDelayUntil(&xLastWakeTime, xFrequency );
+
+		ta++;
+		if (ta == 8) ta = 0;
+		tempData[ta] = max6675_get_temp();
+
+		temp = 0;
+		for (uint8_t i = 0; i < 8; i++)
+			temp += tempData[i];
+		temp_cur_val = temp >> 3;
+
+		if (shutdn_flag)
+		{
+			pwm_set_pulse_width(TIM11, TIM_OC1, 0 );
+		} else
+		{
+			pwm_value = pid_Controller((int16_t) temp_set_val, temp_cur_val, &pidData );
+
+			if (temp_cur_val == 0) pwm_set_pulse_width(TIM11, TIM_OC1, 0 );
+			else pwm_set_pulse_width(TIM11, TIM_OC1, pwm_value );
+		}
+
+	}
+	vTaskDelete(NULL );
+}
 
 /******************************************************************************/
 void vGetTempTask(void *pvParameters)
@@ -44,7 +104,7 @@ void vGetButtonStateTask (void *pvParameters)			// ~ ???  bytes of stack used
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
-		for (uint8_t i=0; i<4; i++)
+		for (uint8_t i=0; i<2; i++)
 		{
 			if(!gpio_get(button_pins[i].port, button_pins[i].pins))
 			{
@@ -197,11 +257,12 @@ void periphery_init()
 	rcc_periph_clock_enable(RCC_GPIOF);
 
 	// Buttons init
-	for (uint8_t i=0; i<4; i++)
+	for (uint8_t i=0; i<2; i++)
 		gpio_mode_setup(button_pins[i].port, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, button_pins[i].pins);
 
 
 	init_led7seg();
+	led7seg_write_uint(&led_ind, 888);
 }
 
 
