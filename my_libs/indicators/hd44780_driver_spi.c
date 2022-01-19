@@ -1,4 +1,4 @@
-#include "hd44780_driver_sr.h"
+#include <indicators/hd44780_driver_spi.h>
 
 static HD44780_Result hd44780_write_bits(HD44780_Interface *interface, uint8_t value);
 
@@ -6,6 +6,8 @@ static HD44780_Result hd44780_driver_init(HD44780_Interface *interface, HD44780_
 {
 	HD44780_SR_Driver *driver = (HD44780_SR_Driver*) interface;
 	HD44780_DelayMicrosecondsFn delay_microseconds = driver->delay_us;
+
+	gpio_mode_setup(driver->spi_cs.port, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, driver->spi_cs.pins);
 
 	driver->addr_mode = addr_mode;
 	driver->out_buf = 0;
@@ -66,13 +68,27 @@ static HD44780_Result hd44780_write_bits(HD44780_Interface *interface, uint8_t v
 	}
 
 	driver->out_buf &= ~(driver->pin_mask[HD44780_PIN_EN]);
-	HC595_send(driver->out_buf );
+	//HC595_send(driver->out_buf );
+	gpio_clear(driver->spi_cs.port, driver->spi_cs.pins);
+	spi_send(driver->spi, driver->out_buf);
+	while ((SPI_SR(driver->spi) & SPI_SR_BSY));
+	gpio_set(driver->spi_cs.port, driver->spi_cs.pins);
 	delay_microseconds(1 );
+
 	driver->out_buf |= driver->pin_mask[HD44780_PIN_EN];
-	HC595_send(driver->out_buf );
+	//HC595_send(driver->out_buf );
+	gpio_clear(driver->spi_cs.port, driver->spi_cs.pins);
+	spi_send(driver->spi, driver->out_buf);
+	while ((SPI_SR(driver->spi) & SPI_SR_BSY));
+	gpio_set(driver->spi_cs.port, driver->spi_cs.pins);
 	delay_microseconds(1 );
+
 	driver->out_buf &= ~(driver->pin_mask[HD44780_PIN_EN]);
-	HC595_send(driver->out_buf );
+//	HC595_send(driver->out_buf );
+	gpio_clear(driver->spi_cs.port, driver->spi_cs.pins);
+	spi_send(driver->spi, driver->out_buf);
+	while ((SPI_SR(driver->spi) & SPI_SR_BSY));
+	gpio_set(driver->spi_cs.port, driver->spi_cs.pins);
 	delay_microseconds(50 );
 
 	return HD44780_RESULT_OK;

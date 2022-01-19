@@ -3,8 +3,10 @@
 
 #include <stdlib.h>
 #include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/spi.h>
 #include "hd44780.h"
-#include "hc595.h"
+#include "convert_fn.h"
+
 
 typedef struct
 {
@@ -15,6 +17,8 @@ typedef struct
 	uint8_t dp_amount;
 	HD44780_DelayMicrosecondsFn delay_us;
 	uint16_t pin_mask[HD44780_PINS_AMOUNT];
+	uint32_t			spi;
+	GPIO_HW_PIN	spi_cs;
 } HD44780_SR_Driver;
 
 extern const HD44780_Interface HD44780_INTERFACE;
