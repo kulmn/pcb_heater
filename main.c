@@ -20,7 +20,7 @@ uint16_t 			cur_temp=0;
 
 
 
-/******************************************************************************
+/******************************************************************************/
 uint16_t max6675_get_temp(void)
 {
 	uint16_t spi_data;
@@ -34,7 +34,7 @@ uint16_t max6675_get_temp(void)
 	else return  	spi_data= spi_data>>5;
 }
 
-/******************************************************************************
+/******************************************************************************/
 void vPID_Task(void *pvParameters)	//  ~ 20 * 4  bytes of stack used
 {
 	TickType_t xLastWakeTime;
@@ -188,6 +188,64 @@ void vLed7segUpdateTask(void *pvParameters) 			//  ~ 21 * 4  bytes of stack used
 
 
 /******************************************************************************/
+void spi1_init(void)
+{
+	rcc_periph_clock_enable(RCC_SPI1);
+	spi_set_master_mode(SPI1);
+	spi_set_unidirectional_mode(SPI1);
+#ifdef STM32F0
+	spi_set_data_size(SPI1,SPI_CR2_DS_16BIT);
+#else
+	spi_set_dff_16bit(SPI1);
+#endif
+	spi_set_clock_polarity_0(SPI1);
+	//spi_set_clock_phase_1(SPI1);		// max6675
+	spi_set_clock_phase_0(SPI1);		// hc595
+	spi_enable_software_slave_management(SPI1);
+	spi_set_nss_high(SPI1);
+	spi_set_baudrate_prescaler(SPI1,SPI_CR1_BR_FPCLK_DIV_8);
+	spi_send_msb_first(SPI1);
+	spi_disable_crc(SPI1);
+	spi_enable(SPI1);
+}
+
+/******************************************************************************/
+void max6675_spi_init(void)
+{
+	gpio_mode_setup(PORT(SPI1_SCK), GPIO_MODE_AF, GPIO_PUPD_NONE, PIN(SPI1_SCK)); // SCK
+	gpio_set_af(PORT(SPI1_SCK), GPIO_AF5, PIN(SPI1_SCK));
+	gpio_set_output_options(PORT(SPI1_SCK), GPIO_OTYPE_PP, GPIO_OSPEED_40MHZ, PIN(SPI1_SCK));
+	gpio_mode_setup(PORT(SPI1_MISO), GPIO_MODE_AF, GPIO_PUPD_NONE, PIN(SPI1_MISO));	// MISO
+	gpio_set_af(PORT(SPI1_MISO), GPIO_AF5, PIN(SPI1_MISO));
+	gpio_set_output_options(PORT(SPI1_MISO), GPIO_OTYPE_PP, GPIO_OSPEED_40MHZ, PIN(SPI1_MISO));
+
+	gpio_mode_setup(PORT(SPI1_CS), GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN(SPI1_CS));	// CS
+	gpio_set(SPI1_CS);
+
+	/* Enable SPI1 Periph and gpio clocks */
+	rcc_periph_clock_enable(RCC_SPI1);
+
+//	spi_reset(SPI1);
+	spi_set_master_mode(SPI1);
+	spi_set_unidirectional_mode(SPI1);
+	spi_set_receive_only_mode(SPI1);
+#ifdef STM32F0
+	spi_set_data_size(SPI1,SPI_CR2_DS_16BIT);
+#else
+	spi_set_dff_16bit(SPI1);
+#endif
+	spi_set_clock_polarity_0(SPI1);
+	spi_set_clock_phase_1(SPI1);
+	spi_enable_software_slave_management(SPI1);
+	spi_set_nss_high(SPI1);
+	spi_set_baudrate_prescaler(SPI1,SPI_CR1_BR_FPCLK_DIV_16);
+	spi_send_msb_first(SPI1);
+	spi_disable_crc(SPI1);
+
+}
+
+
+/******************************************************************************/
 void init_led7seg(void)
 {
 	const GPIO_HW_PIN pins[LED7SEG_DIGITS_NUM] = { { LED_IND_DIG_0 }, { LED_IND_DIG_1 }, { LED_IND_DIG_2 }  };
@@ -263,6 +321,9 @@ void periphery_init()
 
 	init_led7seg();
 	led7seg_write_uint(&led_ind, 888);
+
+	max6675_spi_init();
+	pid_Init(K_P * SCALING_FACTOR, K_I * SCALING_FACTOR , K_D * SCALING_FACTOR , &pidData);
 }
 
 

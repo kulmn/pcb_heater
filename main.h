@@ -53,6 +53,10 @@ typedef enum
 
 /**** PINs defines *******/
 
+#define SPI1_SCK			GPIOB, GPIO3
+#define SPI1_MISO			GPIOB, GPIO4
+#define SPI1_CS			GPIOA, GPIO15
+
 // leg7seg
 #define LED_IND_DIG_0		GPIOB, GPIO7
 #define LED_IND_DIG_1		GPIOB, GPIO6
@@ -73,6 +77,18 @@ typedef enum
 #define BUTTN_HOURS_UP		GPIOB, GPIO0
 #define BUTTN_HOURS_DN		GPIOB, GPIO1
 
+
+/*! \brief P, I and D parameter values
+ *
+ * The K_P, K_I and K_D values (P, I and D gains)
+ * need to be modified to adapt to the application at hand
+ */
+//! \xrefitem todo "Todo" "Todo list"
+#define K_P     2.5
+//! \xrefitem todo "Todo" "Todo list"
+#define K_I     0.01
+//! \xrefitem todo "Todo" "Todo list"
+#define K_D     0.00
 
 
 
