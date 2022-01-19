@@ -12,7 +12,7 @@ static uint8_t 		led7seg_buf[4];
 //! Parameters for regulator
 struct PID_DATA pidData;
 
-volatile uint16_t  temp_set_val, fan_set_val, temp_cur_val = 0;
+volatile uint16_t  temp_set_val,  temp_cur_val = 0;
 uint8_t	shutdn_flag=0, poweroff_flag=0;
 
 uint16_t 			mb_time_in_munutes = 0, loc_time_in_munutes = 0;
@@ -20,18 +20,31 @@ uint16_t 			cur_temp=0;
 
 
 
-/******************************************************************************
+/******************************************************************************/
 uint16_t max6675_get_temp(void)
 {
 	uint16_t spi_data;
 
-	gpio_clear(SPI1_CS);
+	spi_disable(SPI1);
+	spi_set_clock_phase_1(SPI1);
+	spi_set_receive_only_mode(SPI1);
+//	spi_enable(SPI1);
+
+	gpio_clear(MAX6675_CS);
 	spi_enable(SPI1);
 	spi_data=spi_read(SPI1);
-	gpio_set(SPI1_CS);
+//	spi_data=spi_xfer(SPI1, 0);
+	gpio_set(MAX6675_CS);
+//	spi_disable(SPI1);
+
 	spi_disable(SPI1);
-	if (spi_data & 0x0004)	return 0;
-	else return  	spi_data= spi_data>>5;
+	spi_set_clock_phase_0(SPI1);
+	spi_set_full_duplex_mode(SPI1);
+	spi_enable(SPI1);
+
+//	if (spi_data & 0x0004)	return 0;
+//	else return  	spi_data= spi_data>>5;
+	return spi_data;
 }
 
 /******************************************************************************
@@ -78,11 +91,15 @@ void vPID_Task(void *pvParameters)	//  ~ 20 * 4  bytes of stack used
 void vGetTempTask(void *pvParameters)
 {
 	portBASE_TYPE xStatus;
-	uint16_t temp = 0;
-	float t_cur = 0;
+
 
 	while (1)
 	{
+		xSemaphoreTake(xSPI_Mutex, portMAX_DELAY);
+		temp_cur_val = max6675_get_temp();
+		led7seg_write_uint(&led_ind, temp_cur_val);
+
+		xSemaphoreGive(xSPI_Mutex);
 
 		vTaskDelay(1000 );
 	}
@@ -218,7 +235,7 @@ void spi1_init(void)
 	spi_set_clock_phase_0(SPI1);		// hc595
 	spi_enable_software_slave_management(SPI1);
 	spi_set_nss_high(SPI1);
-	spi_set_baudrate_prescaler(SPI1,SPI_CR1_BR_FPCLK_DIV_8);
+	spi_set_baudrate_prescaler(SPI1,SPI_CR1_BR_FPCLK_DIV_16);
 	spi_send_msb_first(SPI1);
 	spi_disable_crc(SPI1);
 	spi_enable(SPI1);
@@ -304,8 +321,8 @@ static void system_clock_setup(void)
 //	flash_set_ws(FLASH_ACR_LATENCY_000_024MHZ);
 	flash_set_ws(FLASH_ACR_LATENCY_024_048MHZ);
 
-	// 8/2 MHz * 8  = 32MHz
-	rcc_set_pll_multiplication_factor(RCC_CFGR_PLLMUL_MUL8);
+	// 8/2 MHz * 4  = 16MHz
+	rcc_set_pll_multiplication_factor(RCC_CFGR_PLLMUL_MUL4);
 	rcc_set_pll_source(RCC_CFGR_PLLSRC_HSI_CLK_DIV2);
 	rcc_osc_on(RCC_PLL);
 	rcc_wait_for_osc_ready(RCC_PLL);
@@ -340,6 +357,8 @@ void periphery_init()
 	init_led7seg();
 	led7seg_write_uint(&led_ind, 245);
 
+	gpio_mode_setup(PORT(MAX6675_CS), GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN(MAX6675_CS));	// CS
+		gpio_set(MAX6675_CS);
 //	max6675_spi_init();
 //	pid_Init(K_P * SCALING_FACTOR, K_I * SCALING_FACTOR , K_D * SCALING_FACTOR , &pidData);
 }

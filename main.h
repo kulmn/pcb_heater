@@ -59,6 +59,7 @@ typedef enum
 #define SPI1_MOSI			GPIOA, GPIO7
 
 #define HC595_CS			GPIOA, GPIO3
+#define MAX6675_CS		GPIOA, GPIO4
 #ifdef STM32F0
 	#define		SPI_GPIO_SPEED		GPIO_OSPEED_HIGH
 #else
