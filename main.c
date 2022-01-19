@@ -25,26 +25,18 @@ uint16_t max6675_get_temp(void)
 {
 	uint16_t spi_data;
 
-	spi_disable(SPI1);
-	spi_set_clock_phase_1(SPI1);
-	spi_set_receive_only_mode(SPI1);
-//	spi_enable(SPI1);
+	// Clear receive FIFO
+	while (SPI_SR(SPI1) & SPI_SR_FRLVL_FIFO_FULL)
+		spi_data=spi_read(SPI1);
 
 	gpio_clear(MAX6675_CS);
-	spi_enable(SPI1);
-	spi_data=spi_read(SPI1);
-//	spi_data=spi_xfer(SPI1, 0);
+	spi_data=spi_xfer(SPI1, 0);
 	gpio_set(MAX6675_CS);
-//	spi_disable(SPI1);
 
-	spi_disable(SPI1);
-	spi_set_clock_phase_0(SPI1);
-	spi_set_full_duplex_mode(SPI1);
-	spi_enable(SPI1);
-
-//	if (spi_data & 0x0004)	return 0;
-//	else return  	spi_data= spi_data>>5;
-	return spi_data;
+	if (spi_data & 0x0004)	// Error no sensor
+		return 0;
+	else
+		return  	spi_data= spi_data>>5;
 }
 
 /******************************************************************************
@@ -235,7 +227,7 @@ void spi1_init(void)
 	spi_set_clock_phase_0(SPI1);		// hc595
 	spi_enable_software_slave_management(SPI1);
 	spi_set_nss_high(SPI1);
-	spi_set_baudrate_prescaler(SPI1,SPI_CR1_BR_FPCLK_DIV_16);
+	spi_set_baudrate_prescaler(SPI1,SPI_CR1_BR_FPCLK_DIV_8);
 	spi_send_msb_first(SPI1);
 	spi_disable_crc(SPI1);
 	spi_enable(SPI1);
@@ -328,8 +320,8 @@ static void system_clock_setup(void)
 	rcc_wait_for_osc_ready(RCC_PLL);
 	rcc_set_sysclk_source(RCC_PLL);
 
-	rcc_apb1_frequency = 32000000;
-	rcc_ahb_frequency = 32000000;
+	rcc_apb1_frequency = 16000000;
+	rcc_ahb_frequency = 16000000;
 }
 
 
