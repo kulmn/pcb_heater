@@ -9,6 +9,7 @@
 #define MAIN_H_
 
 
+#include <indicators/led7seg_driver_spi.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <libopencm3/stm32/rcc.h>
@@ -31,7 +32,6 @@
 #include "pid.h"
 
 #include "indicators/led7seg.h"
-#include "indicators/led7seg_driver_sr.h"
 
 
 
@@ -53,14 +53,20 @@ typedef enum
 
 /**** PINs defines *******/
 
-#define SPI1_SCK			GPIOB, GPIO3
-#define SPI1_MISO			GPIOB, GPIO4
-#define SPI1_CS			GPIOA, GPIO15
+#define SPI1_SCK			GPIOA, GPIO5
+#define SPI1_MISO			GPIOA, GPIO6
+#define SPI1_MOSI			GPIOA, GPIO7
+#define HC595_CS			GPIOA, GPIO3
+#ifdef STM32F0
+	#define		SPI_GPIO_SPEED		GPIO_OSPEED_HIGH
+#else
+	#define		SPI_GPIO_SPEED		GPIO_OSPEED_40MHZ
+#endif
 
 // leg7seg
-#define LED_IND_DIG_0		GPIOB, GPIO7
+#define LED_IND_DIG_0		GPIOB, GPIO5
 #define LED_IND_DIG_1		GPIOB, GPIO6
-#define LED_IND_DIG_2		GPIOB, GPIO5
+#define LED_IND_DIG_2		GPIOB, GPIO7
 
 
 // hc595 masks

@@ -21,9 +21,10 @@
 typedef struct
 {
 	LED7SEG_Interface interface;
-	uint32_t seg_port;
-	uint16_t seg_masks[LED7SEG_SEGS_AMOUNT];
-	GPIO_HW_PIN digit[LED7SEG_DIGITS_NUM];
+	uint16_t 		seg_masks[LED7SEG_SEGS_AMOUNT];
+	GPIO_HW_PIN 	digit[LED7SEG_DIGITS_NUM];
+	uint32_t			spi;
+	GPIO_HW_PIN	spi_cs;
 } LED7SEG_SR_Driver;
 
 extern const LED7SEG_Interface LED7SEG_SR_INTERFACE;

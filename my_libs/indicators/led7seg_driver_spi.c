@@ -5,7 +5,7 @@
  *      Author: kulish_y
  */
 
-#include "led7seg_driver_sr.h"
+#include <indicators/led7seg_driver_spi.h>
 
 /******************************************************************************/
 static void led7seg_driver_init(LED7SEG_Interface *interface, uint8_t digits_num)
@@ -15,7 +15,8 @@ static void led7seg_driver_init(LED7SEG_Interface *interface, uint8_t digits_num
 	for(uint8_t i = 0; i < digits_num; i++)
 		gpio_mode_setup(driver->digit[i].port, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, driver->digit[i].pins);
 
-	HC595_spi_init();
+	gpio_mode_setup(driver->spi_cs.port, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, driver->spi_cs.pins);
+	//HC595_spi_init();
 }
 
 
@@ -62,9 +63,10 @@ static void led7seg_send(LED7SEG_Interface *interface, uint16_t data)
 
 	out_data = (hi_data << 8) | lo_data;
 
-//	out_data = lo_data;
-
-	HC595_send(out_data);
+	gpio_clear(driver->spi_cs.port, driver->spi_cs.pins);
+	spi_send(driver->spi, out_data);
+	while ((SPI_SR(driver->spi) & SPI_SR_BSY));
+	gpio_set(driver->spi_cs.port, driver->spi_cs.pins);
 }
 
 /******************************************************************************/
