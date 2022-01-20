@@ -1,8 +1,10 @@
 #include "main.h"
 
 SemaphoreHandle_t xSPI_Mutex;
-SemaphoreHandle_t xButtons_Smphr[4];
-const GPIO_HW_PIN button_pins[4] = { {BUTTN_HOURS_UP}, {BUTTN_HOURS_DN} };
+SemaphoreHandle_t xButtons_Smphr[BUTTN_NUM];
+
+const GPIO_HW_PIN button_pins[BUTTN_NUM] = { {BUTTN_UP_pin}, {BUTTN_DN_pin} };
+
 
 
 LED7SEG			led_ind;
@@ -12,7 +14,7 @@ static uint8_t 		led7seg_buf[4];
 //! Parameters for regulator
 struct PID_DATA pidData;
 
-volatile uint16_t  temp_set_val,  temp_cur_val = 0;
+volatile uint16_t  temp_set_val=0,  temp_cur_val = 0;
 uint8_t	shutdn_flag=0, poweroff_flag=0;
 
 uint16_t 			mb_time_in_munutes = 0, loc_time_in_munutes = 0;
@@ -89,7 +91,7 @@ void vGetTempTask(void *pvParameters)
 	{
 		xSemaphoreTake(xSPI_Mutex, portMAX_DELAY);
 		temp_cur_val = max6675_get_temp();
-		led7seg_write_uint(&led_ind, temp_cur_val+1);
+//		led7seg_write_uint(&led_ind, temp_cur_val+1);
 
 		xSemaphoreGive(xSPI_Mutex);
 
@@ -107,13 +109,13 @@ void vGetButtonStateTask (void *pvParameters)			// ~ ???  bytes of stack used
 
 	xLastWakeTime = xTaskGetTickCount();
 
-	for (uint8_t i=0; i<4; i++) xButtons_Smphr[i] = xSemaphoreCreateCounting(10,0);
+	for (uint8_t i=0; i<BUTTN_NUM; i++) xButtons_Smphr[i] = xSemaphoreCreateCounting(10,0);
 
 	for( ;; )
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
-		for (uint8_t i=0; i<2; i++)
+		for (uint8_t i=0; i<BUTTN_NUM; i++)
 		{
 			if(!gpio_get(button_pins[i].port, button_pins[i].pins))
 			{
@@ -136,38 +138,47 @@ void vIndDataOutTask(void *pvParameters)
 	portBASE_TYPE xStatus;
 	const TickType_t xFrequency = DATA_OUT_TASK_FRQ;		//  ms
 
+	static uint16_t scnt = 0;
+	static uint8_t cur_displ  = DISPL_TEMP_CUR;
+
 	xLastWakeTime = xTaskGetTickCount();
 	for (;;)
 	{
 		vTaskDelayUntil(&xLastWakeTime, xFrequency );
 
 		uint8_t button_pressed = 0;
-		for (uint8_t i = 0; i < 4; i++)
+		for (uint8_t i = 0; i < BUTTN_NUM; i++)
 		{
 			while (xSemaphoreTake( xButtons_Smphr[i], ( portTickType ) 0 ) == pdTRUE)
 			{
-				button_pressed = 1;
+				scnt = BT_PRESS_DELAY_TIME; 	// Delay after button pressed, sec
+				cur_displ = DISPL_TEMP_SET;
 				switch (i)
 				{
-					case 0:
-
-						break;
-					case 1:
-
-						break;
-					case 2:
-
-						break;
-					case 3:
-
-						break;
+					case BUTTN_UP:	if (temp_set_val<300)
+						temp_set_val += 5;
+					break;
+					case BUTTN_DN:	if (temp_set_val>20)
+						temp_set_val -= 5;
+					break;
 				}
 			}
 		}
-		if (button_pressed)
-		{
 
+
+		switch (cur_displ)
+		{
+			case DISPL_TEMP_CUR:
+				led7seg_write_uint(&led_ind, temp_cur_val);
+				break;
+			case DISPL_TEMP_SET:
+				scnt--;
+				if (scnt == 0) cur_displ = DISPL_TEMP_CUR;
+				led7seg_write_uint(&led_ind, temp_set_val);
+				break;
 		}
+
+
 
 	}
 
@@ -301,7 +312,7 @@ void periphery_init()
 	rcc_periph_clock_enable(RCC_GPIOF);
 
 	// Buttons init
-	for (uint8_t i=0; i<2; i++)
+	for (uint8_t i=0; i<BUTTN_NUM; i++)
 		gpio_mode_setup(button_pins[i].port, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, button_pins[i].pins);
 
 

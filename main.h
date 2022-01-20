@@ -35,11 +35,15 @@
 
 
 
-#define		DATA_OUT_TASK_FRQ			(500)			//ms
-#define		BT_PRESS_DELAY_TIME		( 5 * (1000/DATA_OUT_TASK_FRQ)	)		//s
+#define		DATA_OUT_TASK_FRQ			(100)			//ms
+#define		BT_PRESS_DELAY_TIME		( 3 * (1000/DATA_OUT_TASK_FRQ)	)		//s
 //#define		CLOCK_SHOW_TIME			( 10 * (1000/DATA_OUT_TASK_FRQ) )		//s
 //#define		PARAM1_SHOW_TIME		(  2 * (1000/DATA_OUT_TASK_FRQ) + CLOCK_SHOW_TIME )
 //#define		PARAM2_SHOW_TIME		( 2 * (1000/DATA_OUT_TASK_FRQ) +  PARAM1_SHOW_TIME)		//s
+
+
+#define		DISPL_TEMP_CUR	0
+#define		DISPL_TEMP_SET	1
 
 /**** PINs defines *******/
 #define SPI1_AF				GPIO_AF0
@@ -73,8 +77,15 @@
 #define LED_IND_SEG_H		( (uint8_t) 1 << 0 )
 
 // buttons
-#define BUTTN_HOURS_UP		GPIOB, GPIO0
-#define BUTTN_HOURS_DN		GPIOB, GPIO1
+typedef enum
+{
+	BUTTN_UP,
+	BUTTN_DN,
+	BUTTN_NUM,
+} BUTTN;
+//#define BUTTN_NUM		2
+#define BUTTN_UP_pin		GPIOB, GPIO0
+#define BUTTN_DN_pin		GPIOB, GPIO1
 
 
 /*! \brief P, I and D parameter values
