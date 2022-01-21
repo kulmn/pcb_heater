@@ -34,8 +34,9 @@
 #include "indicators/led7seg.h"
 
 
-#define		MAX_TEMPERATURE			(300)			// C
-#define		MIN_TEMPERATURE			(50)			// C
+#define		MAX_TEMPERATURE			(300)
+#define		OVRHT_TEMPERATURE		(50 + MAX_TEMPERATURE)
+#define		MIN_TEMPERATURE			(50)
 
 #define		PID_TASK_FRQ				(2000)			//ms
 #define		HEATER_OFF_TIME			( 30 *  (60000/PID_TASK_FRQ)	)		//min

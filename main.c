@@ -67,7 +67,7 @@ void vPID_Task (void *pvParameters)			//  ~ 20 * 4  bytes of stack used
 			pwm_value = pid_Controller((int16_t)temp_set_val, temp_cur_val, &pidData);
 		}
 
-		if (temp_cur_val == 0) 		// Temperature sensor error
+		if ( (temp_cur_val == 0) || (temp_cur_val > OVRHT_TEMPERATURE) ) 		// Temperature sensor error or overheating
 			pwm_set_pulse_width(TIM1, TIM_OC4, 0);
 		else
 			pwm_set_pulse_width(TIM1, TIM_OC4, pwm_value);
