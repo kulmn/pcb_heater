@@ -72,8 +72,8 @@ void vPID_Task (void *pvParameters)			//  ~ 20 * 4  bytes of stack used
 		else
 			pwm_set_pulse_width(TIM1, TIM_OC4, pwm_value);
 
-
 		work_cnt++;
+		iwdg_reset();			// watchdog reset
 
      }
     vTaskDelete(NULL);
@@ -357,6 +357,10 @@ void periphery_init()
 	pid_Init(K_P * SCALING_FACTOR, K_I * SCALING_FACTOR , K_D * SCALING_FACTOR , &pidData);
 
 	heater_pwm_init();
+
+	// start watchdog
+	iwdg_set_period_ms(5000);
+	iwdg_start();
 }
 
 
