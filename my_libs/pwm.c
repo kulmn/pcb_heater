@@ -20,15 +20,8 @@
 #include "pwm.h"
 
 
-void pwm_init_timer( uint32_t timer_peripheral, enum rcc_periph_clken rcc_tim, uint32_t prescaler, uint32_t period)
+void pwm_init_timer( uint32_t timer_peripheral, uint32_t prescaler, uint32_t period)
 {
-     /* Enable timer clock. */
-	rcc_periph_clock_enable(rcc_tim);
-//     rcc_peripheral_enable_clock(reg, en);
-
-     /* Reset TIM1 peripheral */
-     timer_reset(timer_peripheral);
-
      /* Set the timers global mode to:
       * - use no divider
       * - alignment edge

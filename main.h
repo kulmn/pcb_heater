@@ -34,6 +34,8 @@
 #include "indicators/led7seg.h"
 
 
+#define		PID_TASK_FRQ				(2000)			//ms
+#define		HEATER_OFF_TIME			( 30 *  (60000/PID_TASK_FRQ)	)		//min
 
 #define		DATA_OUT_TASK_FRQ			(100)			//ms
 #define		BT_PRESS_DELAY_TIME		( 3 * (1000/DATA_OUT_TASK_FRQ)	)		//s

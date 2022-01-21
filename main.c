@@ -14,7 +14,7 @@ static uint8_t 		led7seg_buf[4];
 //! Parameters for regulator
 struct PID_DATA pidData;
 
-volatile uint16_t  temp_set_val=0,  temp_cur_val = 0;
+volatile uint16_t  temp_set_val=0,  temp_cur_val = 0, work_cnt=0;;
 uint8_t	shutdn_flag=0, poweroff_flag=0;
 
 uint16_t 			mb_time_in_munutes = 0, loc_time_in_munutes = 0;
@@ -41,44 +41,42 @@ uint16_t max6675_get_temp(void)
 		return  	spi_data= spi_data>>5;
 }
 
-/******************************************************************************
-void vPID_Task(void *pvParameters)	//  ~ 20 * 4  bytes of stack used
+/******************************************************************************/
+void vPID_Task (void *pvParameters)			//  ~ 20 * 4  bytes of stack used
 {
 	TickType_t xLastWakeTime;
-	const TickType_t xFrequency = (300 / portTICK_RATE_MS);	// 200 ms
-	int16_t pwm_value = 0;
-
-	uint16_t tempData[16] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-	uint8_t ta = 0;
-	uint32_t temp;
+	const TickType_t xFrequency = ( PID_TASK_FRQ / portTICK_RATE_MS );
+	int16_t pwm_value=0;
 
 	xLastWakeTime = xTaskGetTickCount();
-	for (;;)
-	{
-		vTaskDelayUntil(&xLastWakeTime, xFrequency );
+	for( ;; )
+    {
+		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
-		ta++;
-		if (ta == 8) ta = 0;
-		tempData[ta] = max6675_get_temp();
+		xSemaphoreTake(xSPI_Mutex, portMAX_DELAY);
+		temp_cur_val = max6675_get_temp();
+		xSemaphoreGive(xSPI_Mutex);
 
-		temp = 0;
-		for (uint8_t i = 0; i < 8; i++)
-			temp += tempData[i];
-		temp_cur_val = temp >> 3;
-
-		if (shutdn_flag)
+		if (work_cnt > HEATER_OFF_TIME)
 		{
-			pwm_set_pulse_width(TIM11, TIM_OC1, 0 );
-		} else
+			work_cnt = HEATER_OFF_TIME+1;
+			pwm_value = pid_Controller(0, temp_cur_val, &pidData);
+		}
+		else
 		{
-			pwm_value = pid_Controller((int16_t) temp_set_val, temp_cur_val, &pidData );
-
-			if (temp_cur_val == 0) pwm_set_pulse_width(TIM11, TIM_OC1, 0 );
-			else pwm_set_pulse_width(TIM11, TIM_OC1, pwm_value );
+			pwm_value = pid_Controller((int16_t)temp_set_val, temp_cur_val, &pidData);
 		}
 
-	}
-	vTaskDelete(NULL );
+		if (temp_cur_val == 0) 		// Temperature sensor error
+			pwm_set_pulse_width(TIM1, TIM_OC4, 0);
+		else
+			pwm_set_pulse_width(TIM1, TIM_OC4, pwm_value);
+
+
+		work_cnt++;
+
+     }
+    vTaskDelete(NULL);
 }
 
 /******************************************************************************/
@@ -136,7 +134,7 @@ void vIndDataOutTask(void *pvParameters)
 {
 	TickType_t xLastWakeTime;
 	portBASE_TYPE xStatus;
-	const TickType_t xFrequency = DATA_OUT_TASK_FRQ;		//  ms
+	const TickType_t xFrequency = (DATA_OUT_TASK_FRQ / portTICK_RATE_MS);		//  ms
 
 	static uint16_t scnt = 0;
 	static uint8_t cur_displ  = DISPL_TEMP_CUR;
@@ -153,6 +151,7 @@ void vIndDataOutTask(void *pvParameters)
 			{
 				scnt = BT_PRESS_DELAY_TIME; 	// Delay after button pressed, sec
 				cur_displ = DISPL_TEMP_SET;
+				work_cnt=0;						// Reset HeaterOFF counter
 				switch (i)
 				{
 					case BUTTN_UP:	if (temp_set_val<300)
@@ -289,9 +288,11 @@ void init_led7seg(void)
 }
 
 /******************************************************************************/
-void Heater_pwm_init(void)
+void heater_pwm_init(void)
 {
-	pwm_init_timer( TIM1,RCC_TIM1, (rcc_apb1_frequency/250-1), 500);		// 250Hz  Period=500x4ms=2000 ms
+	rcc_periph_clock_enable(RCC_TIM1);
+	rcc_periph_reset_pulse(RST_TIM1);
+	pwm_init_timer( TIM1, (rcc_apb1_frequency/250-1), 500);		// 250Hz  Period=500x4ms=2000 ms
 	pwm_init_output_channel(TIM1, TIM_OC4, PORT(TIM1_PWM_CH4), PIN(TIM1_PWM_CH4), GPIO_AF2);
 	pwm_set_pulse_width(TIM1, TIM_OC4, 0);
 	pwm_start_timer(TIM1);
@@ -373,11 +374,12 @@ int main(void)
 	periphery_init();
 	xSPI_Mutex = xSemaphoreCreateMutex();
 //	xTemperQueue=xQueueCreate( 5, sizeof( DS18B20_TypeDef ));
-	xTaskCreate(vGetTempTask,(signed char*)"", configMINIMAL_STACK_SIZE * 2 ,NULL, tskIDLE_PRIORITY + 1, NULL);
+//	xTaskCreate(vGetTempTask,(signed char*)"", configMINIMAL_STACK_SIZE * 2 ,NULL, tskIDLE_PRIORITY + 1, NULL);
 	xTaskCreate(vGetButtonStateTask,(signed char*)"", configMINIMAL_STACK_SIZE * 2,	NULL, tskIDLE_PRIORITY + 1, NULL);
 
 	xTaskCreate(vIndDataOutTask,(signed char*)"", configMINIMAL_STACK_SIZE * 2,	NULL, tskIDLE_PRIORITY + 1, NULL);
 	xTaskCreate(vLed7segUpdateTask,(signed char*)"", configMINIMAL_STACK_SIZE * 1,	NULL, tskIDLE_PRIORITY + 2, NULL);
+	xTaskCreate(vPID_Task,(signed char*)"", configMINIMAL_STACK_SIZE * 1,	NULL, tskIDLE_PRIORITY + 1, NULL);
 
 	xTaskCreate(vSaveDataTask,(signed char*)"", configMINIMAL_STACK_SIZE * 1,	NULL, tskIDLE_PRIORITY + 1, NULL);
 

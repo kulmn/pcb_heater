@@ -36,7 +36,7 @@
  *							The timers counter is counted up with the prescaled clock freq. With a freq. of 20kHz, the
  *							timer e.g. is increased every 1us.
  */
-void pwm_init_timer( uint32_t timer_peripheral, enum rcc_periph_clken rcc_tim, uint32_t prescaler, uint32_t period);
+void pwm_init_timer( uint32_t timer_peripheral, uint32_t prescaler, uint32_t period);
 
 /**
  * Initialize a single ouput chanel for a timer. This function also intializes the GPIOs tight to the timers output channel.
