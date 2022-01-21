@@ -60,6 +60,9 @@
 	#define		SPI_GPIO_SPEED		GPIO_OSPEED_40MHZ
 #endif
 
+// Heater pin
+#define TIM1_PWM_CH4			GPIOA, GPIO11
+
 // leg7seg
 #define LED_IND_DIG_0		GPIOB, GPIO5
 #define LED_IND_DIG_1		GPIOB, GPIO6

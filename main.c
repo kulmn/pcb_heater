@@ -288,6 +288,14 @@ void init_led7seg(void)
 	led7seg_init(&led_ind);
 }
 
+/******************************************************************************/
+void Heater_pwm_init(void)
+{
+	pwm_init_timer( TIM1,RCC_TIM1, (rcc_apb1_frequency/250-1), 500);		// 250Hz  Period=500x4ms=2000 ms
+	pwm_init_output_channel(TIM1, TIM_OC4, PORT(TIM1_PWM_CH4), PIN(TIM1_PWM_CH4), GPIO_AF2);
+	pwm_set_pulse_width(TIM1, TIM_OC4, 0);
+	pwm_start_timer(TIM1);
+}
 
 /******************************************************************************/
 static void system_clock_setup(void)
@@ -344,6 +352,8 @@ void periphery_init()
 		gpio_set(MAX6675_CS);
 
 //	pid_Init(K_P * SCALING_FACTOR, K_I * SCALING_FACTOR , K_D * SCALING_FACTOR , &pidData);
+
+	heater_pwm_init();
 }
 
 
