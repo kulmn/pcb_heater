@@ -154,10 +154,10 @@ void vIndDataOutTask(void *pvParameters)
 				work_cnt=0;						// Reset HeaterOFF counter
 				switch (i)
 				{
-					case BUTTN_UP:	if (temp_set_val<300)
+					case BUTTN_UP:	if (temp_set_val < MAX_TEMPERATURE )
 						temp_set_val += 5;
 					break;
-					case BUTTN_DN:	if (temp_set_val>20)
+					case BUTTN_DN:	if (temp_set_val>MIN_TEMPERATURE)
 						temp_set_val -= 5;
 					break;
 				}
@@ -350,9 +350,11 @@ void periphery_init()
 	led7seg_write_uint(&led_ind, 245);
 
 	gpio_mode_setup(PORT(MAX6675_CS), GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN(MAX6675_CS));	// CS
-		gpio_set(MAX6675_CS);
+	gpio_set(MAX6675_CS);
 
-//	pid_Init(K_P * SCALING_FACTOR, K_I * SCALING_FACTOR , K_D * SCALING_FACTOR , &pidData);
+	temp_set_val = (*(volatile uint16_t*) addr_set_temp);
+			if (temp_set_val>MAX_TEMPERATURE) temp_set_val=MIN_TEMPERATURE;
+	pid_Init(K_P * SCALING_FACTOR, K_I * SCALING_FACTOR , K_D * SCALING_FACTOR , &pidData);
 
 	heater_pwm_init();
 }
