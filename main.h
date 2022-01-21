@@ -101,5 +101,10 @@ typedef enum
 #define K_D     0.00
 
 
+// Save param address
+#define last_page  FLASH_BASE + (15 * 1024)
+#define addr_set_temp (last_page)
+
+
 
 #endif /* MAIN_H_ */

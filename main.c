@@ -205,6 +205,26 @@ void vLed7segUpdateTask(void *pvParameters) 			//  ~ 21 * 4  bytes of stack used
 	vTaskDelete(NULL);
 }
 
+/******************************************************************************/
+void vSaveDataTask (void *pvParameters)
+{
+	for( ;; )
+	{
+		uint16_t saved_temp_set_val;
+
+		saved_temp_set_val = (*(volatile uint16_t*) addr_set_temp);
+
+		if (saved_temp_set_val != temp_set_val)
+		{
+			flash_unlock();
+			flash_erase_page(last_page);
+			flash_program_half_word(addr_set_temp,temp_set_val);
+		}
+
+		vTaskDelay(300000*portTICK_PERIOD_MS);	// 300 sec
+	}
+	vTaskDelete(NULL);
+}
 
 /******************************************************************************/
 void spi1_init(void)
@@ -348,6 +368,8 @@ int main(void)
 
 	xTaskCreate(vIndDataOutTask,(signed char*)"", configMINIMAL_STACK_SIZE * 2,	NULL, tskIDLE_PRIORITY + 1, NULL);
 	xTaskCreate(vLed7segUpdateTask,(signed char*)"", configMINIMAL_STACK_SIZE * 1,	NULL, tskIDLE_PRIORITY + 2, NULL);
+
+	xTaskCreate(vSaveDataTask,(signed char*)"", configMINIMAL_STACK_SIZE * 1,	NULL, tskIDLE_PRIORITY + 1, NULL);
 
 
 	vTaskStartScheduler();
