@@ -168,7 +168,8 @@ void vIndDataOutTask(void *pvParameters)
 		switch (cur_displ)
 		{
 			case DISPL_TEMP_CUR:
-				led7seg_write_uint(&led_ind, temp_cur_val);
+				if (temp_cur_val == 0) led7seg_write_err(&led_ind );
+				else led7seg_write_uint(&led_ind, temp_cur_val);
 				break;
 			case DISPL_TEMP_SET:
 				scnt--;
