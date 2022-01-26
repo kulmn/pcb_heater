@@ -221,7 +221,7 @@ void vSaveDataTask (void *pvParameters)
 			flash_program_half_word(addr_set_temp,temp_set_val);
 		}
 
-		vTaskDelay(300000*portTICK_PERIOD_MS);	// 300 sec
+		vTaskDelay(900000*portTICK_PERIOD_MS);	// 900 sec
 	}
 	vTaskDelete(NULL);
 }

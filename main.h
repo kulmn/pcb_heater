@@ -106,7 +106,7 @@ typedef enum
 //! \xrefitem todo "Todo" "Todo list"
 #define K_P     2.5
 //! \xrefitem todo "Todo" "Todo list"
-#define K_I     0.01
+#define K_I     0.005
 //! \xrefitem todo "Todo" "Todo list"
 #define K_D     0.00
 
